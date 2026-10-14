@@ -12,6 +12,7 @@ from .ivr_flow import (
     build_level2_action_menu_xml,
     build_play_audio_xml,
     build_forward_associate_xml,
+    build_dial_status_xml,
 )
 
 # Configure logging
@@ -252,6 +253,26 @@ def ivr_menu_level2_action():
             error_msg = "Invalid selection. Press 1 to play a short audio message. Press 2 to connect to a live associate."
         xml = build_level2_action_menu_xml(language=language, error_message=error_msg)
         return xml_response(xml)
+
+
+@app.route("/ivr/dial/status", methods=["GET", "POST"])
+def ivr_dial_status():
+    """Webhook callback invoked when call forwarding dial attempt concludes."""
+    call_uuid = request.values.get("CallUUID")
+    dial_status = (request.values.get("DialStatus") or "completed").lower()
+    hangup_cause = request.values.get("DialHangupCause")
+    language = request.args.get("lang", "en").lower()
+
+    logger.info(f"Forward dial concluded: CallUUID={call_uuid}, DialStatus={dial_status}, Cause={hangup_cause}")
+    event_tracker.add_event(
+        stage="DIAL_STATUS",
+        message=f"Associate dial ended with status: '{dial_status}' (Cause: {hangup_cause or 'N/A'})",
+        call_uuid=call_uuid,
+        details={"dial_status": dial_status, "hangup_cause": hangup_cause, "language": language},
+    )
+
+    xml = build_dial_status_xml(dial_status=dial_status, language=language)
+    return xml_response(xml)
 
 
 @app.route("/ivr/hangup", methods=["GET", "POST"])

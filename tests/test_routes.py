@@ -110,7 +110,17 @@ class TestFlaskRoutes(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"<Dial", response.data)
-        self.assertIn(config.live_associate_number.encode(), response.data)
+        self.assertIn(config.formatted_live_associate_number.encode(), response.data)
+        self.assertIn(b"/ivr/dial/status", response.data)
+
+    def test_ivr_dial_status_route(self):
+        response = self.client.post(
+            "/ivr/dial/status?lang=en",
+            data={"CallUUID": "test-uuid-1", "DialStatus": "busy"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"currently unavailable", response.data)
+        self.assertIn(b"<Hangup/>", response.data)
 
     def test_ivr_hangup_route(self):
         response = self.client.post(

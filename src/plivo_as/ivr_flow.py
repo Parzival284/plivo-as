@@ -154,8 +154,39 @@ def build_forward_associate_xml(language: str = "en") -> str:
             voice="WOMAN",
         )
 
-    dial = plivoxml.DialElement(caller_id=config.plivo_source_number)
-    dial.add_number(config.live_associate_number)
+    action_url = config.get_webhook_url(f"/ivr/dial/status?lang={lang}")
+    dial = plivoxml.DialElement(
+        caller_id=config.plivo_source_number,
+        action=action_url,
+        method="POST",
+        redirect=True,
+        timeout=30,
+    )
+    dial.add_number(config.formatted_live_associate_number)
     response.add(dial)
 
+    return response.to_string()
+
+
+def build_dial_status_xml(dial_status: str, language: str = "en") -> str:
+    """Builds Plivo XML when a call forwarding attempt finishes."""
+    response = plivoxml.ResponseElement()
+    lang = language.lower()
+
+    if dial_status == "completed":
+        msg = (
+            "Gracias por comunicarse con nuestro asesor. ¡Hasta luego!"
+            if lang == "es"
+            else "Thank you for speaking with our associate. Goodbye!"
+        )
+    else:
+        msg = (
+            "El asesor no se encuentra disponible en este momento. Gracias por comunicarse con InspireWorks. ¡Hasta luego!"
+            if lang == "es"
+            else "The live associate is currently unavailable. Thank you for calling InspireWorks. Goodbye!"
+        )
+
+    voice_lang = "es-ES" if lang == "es" else "en-US"
+    response.add_speak(msg, language=voice_lang, voice="WOMAN")
+    response.add_hangup()
     return response.to_string()

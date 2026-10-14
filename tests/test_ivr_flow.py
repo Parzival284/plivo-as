@@ -9,6 +9,7 @@ from plivo_as.ivr_flow import (
     build_level2_action_menu_xml,
     build_play_audio_xml,
     build_forward_associate_xml,
+    build_dial_status_xml,
 )
 from plivo_as.config import config
 
@@ -105,10 +106,25 @@ class TestIVRFlow(unittest.TestCase):
         dial = root.find("Dial")
         self.assertIsNotNone(dial)
         self.assertEqual(dial.attrib.get("callerId"), config.plivo_source_number)
+        self.assertIn("/ivr/dial/status", dial.attrib.get("action"))
 
         number = dial.find("Number")
         self.assertIsNotNone(number)
-        self.assertEqual(number.text, config.live_associate_number)
+        self.assertEqual(number.text, config.formatted_live_associate_number)
+
+    def test_build_dial_status_xml_completed(self):
+        xml_str = build_dial_status_xml("completed", language="en")
+        root = ET.fromstring(xml_str)
+        self.assertEqual(root.tag, "Response")
+        speak = root.find("Speak")
+        self.assertIn("Thank you for speaking with our associate", speak.text)
+        self.assertIsNotNone(root.find("Hangup"))
+
+    def test_build_dial_status_xml_unavailable(self):
+        xml_str = build_dial_status_xml("busy", language="en")
+        root = ET.fromstring(xml_str)
+        speak = root.find("Speak")
+        self.assertIn("unavailable", speak.text)
 
 
 if __name__ == "__main__":

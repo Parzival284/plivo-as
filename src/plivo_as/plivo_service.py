@@ -3,7 +3,7 @@
 import logging
 from typing import Dict, Any
 import plivo
-from .config import config
+from .config import config, format_e164
 from .events import event_tracker
 
 logger = logging.getLogger(__name__)
@@ -18,21 +18,22 @@ class PlivoService:
 
     def trigger_outbound_call(self, to_number: str) -> Dict[str, Any]:
         """Initiates an outbound call to the target phone number using Plivo Voice API."""
+        formatted_to = format_e164(to_number)
         answer_url = config.get_webhook_url("/ivr/otp")
         hangup_url = config.get_webhook_url("/ivr/hangup")
 
-        logger.info(f"Triggering outbound call: from={config.plivo_source_number} to={to_number} answer_url={answer_url}")
+        logger.info(f"Triggering outbound call: from={config.plivo_source_number} to={formatted_to} answer_url={answer_url}")
 
         event_tracker.add_event(
             stage="CALL_INITIATED",
-            message=f"Outbound call initiated to {to_number}",
-            details={"from": config.plivo_source_number, "to": to_number, "answer_url": answer_url},
+            message=f"Outbound call initiated to {formatted_to}",
+            details={"from": config.plivo_source_number, "to": formatted_to, "answer_url": answer_url},
         )
 
         try:
             response = self.client.calls.create(
                 from_=config.plivo_source_number,
-                to_=to_number,
+                to_=formatted_to,
                 answer_url=answer_url,
                 answer_method="POST",
                 hangup_url=hangup_url,
