@@ -94,7 +94,9 @@ flowchart TD
 
 ## Configuration (.env)
 
-A ready-to-use `.env` file is present in the project root. You can inspect or update it:
+```bash
+cp .env.example .env
+```
 
 ```ini
 # Plivo API Credentials
