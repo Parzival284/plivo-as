@@ -82,7 +82,7 @@ flowchart TD
 
 1. **Clone repository & enter directory**:
    ```bash
-   cd /home/sri/plivo_as
+   cd /path/to/plivo-as
    ```
 
 2. **Install dependencies using `uv`**:
