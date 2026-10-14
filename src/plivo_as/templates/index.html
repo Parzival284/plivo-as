@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InspireWorks - Plivo IVR Demo System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="logo-area">
+        <div class="logo-badge">IW</div>
+        <div>
+          <h1>InspireWorks IVR Console</h1>
+          <p class="subtitle">Plivo Voice API • Multi-Level IVR & Caller Authentication</p>
+        </div>
+      </div>
+      <div class="status-badge" id="serverStatus">
+        <span class="status-dot"></span> Webhook Server Active
+      </div>
+    </header>
+
+    <!-- System Info Bar -->
+    <section class="info-bar">
+      <div class="info-card">
+        <span class="label">Plivo Caller ID</span>
+        <span class="value mono">{{ source_number }}</span>
+      </div>
+      <div class="info-card">
+        <span class="label">Live Associate Number</span>
+        <span class="value mono">{{ associate_number }}</span>
+      </div>
+      <div class="info-card">
+        <span class="label">Birthdate OTP (DDMM)</span>
+        <span class="value mono otp-highlight">{{ otp }}</span>
+      </div>
+      <div class="info-card">
+        <span class="label">Public Webhook URL</span>
+        <span class="value mono small-text" id="baseUrlDisplay">{{ base_url }}</span>
+      </div>
+    </section>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+      <!-- Call Control Card -->
+      <section class="card call-card">
+        <h2>Initiate Outbound Call</h2>
+        <p class="card-desc">Enter your target phone number (E.164 format) to receive the automated demo call.</p>
+        
+        <form id="callForm" class="call-form">
+          <div class="form-group">
+            <label for="phoneNumber">Target Phone Number</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📞</span>
+              <input 
+                type="tel" 
+                id="phoneNumber" 
+                placeholder="+919876543210" 
+                required 
+                pattern="^\+[1-9]\d{1,14}$"
+                autocomplete="tel"
+              />
+            </div>
+            <small class="helper-text">Must include country code with '+' (e.g., +919876543210)</small>
+          </div>
+
+          <button type="submit" id="callBtn" class="btn btn-primary">
+            <span class="btn-text">Start Demo Call</span>
+            <span class="spinner" style="display: none;"></span>
+          </button>
+        </form>
+
+        <div id="callAlert" class="alert" style="display: none;"></div>
+
+        <div class="ivr-flow-guide">
+          <h3>IVR Demo Flow Walkthrough</h3>
+          <ol class="guide-list">
+            <li><strong>Answer the phone</strong>: The bot asks for your 4-digit birthdate OTP.</li>
+            <li><strong>Demonstrate Error</strong>: Enter a wrong OTP (e.g. <code>0000</code>) &rarr; Bot speaks error & re-prompts.</li>
+            <li><strong>Enter Valid OTP</strong>: Enter <code>{{ otp }}</code> &rarr; Authentication successful!</li>
+            <li><strong>Level 1 (Language)</strong>: Press <code>1</code> for English or <code>2</code> for Spanish.</li>
+            <li><strong>Level 2 (Action)</strong>:
+              <ul>
+                <li>Press <code>1</code>: Stream public MP3 audio message.</li>
+                <li>Press <code>2</code>: Forward call to live associate (<code>{{ associate_number }}</code>).</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Live Interaction & Event Log Card -->
+      <section class="card events-card">
+        <div class="card-header">
+          <div>
+            <h2>Live Call Stepper & Events</h2>
+            <p class="card-desc">Real-time status changes and DTMF interactions</p>
+          </div>
+          <button id="clearLogBtn" class="btn btn-secondary btn-sm">Clear Logs</button>
+        </div>
+
+        <!-- Progress Stepper -->
+        <div class="stepper-container">
+          <div class="step" id="stepInitiated">
+            <div class="step-circle">1</div>
+            <div class="step-label">Call Queued</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" id="stepAnswered">
+            <div class="step-circle">2</div>
+            <div class="step-label">Answered</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" id="stepOtp">
+            <div class="step-circle">3</div>
+            <div class="step-label">OTP Verified</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" id="stepLang">
+            <div class="step-circle">4</div>
+            <div class="step-label">Language</div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step" id="stepAction">
+            <div class="step-circle">5</div>
+            <div class="step-label">Action Done</div>
+          </div>
+        </div>
+
+        <!-- Events List -->
+        <div class="events-log-wrapper">
+          <div id="eventsLog" class="events-log">
+            <div class="empty-state">Waiting for call activity...</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
